@@ -1,0 +1,6 @@
+celery==5.3.4
+Django==4.2.7
+djangorestframework==3.14.0
+eventlet==0.33.3
+greenlet==3.0.1
+gunicorn==21.2.0

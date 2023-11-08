@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Django Application
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - rabbitmq
+
+  # PostgreSQL Database
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # RabbitMQ - Message Broker for Celery
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"  # RabbitMQ
+      - "15672:15672"  # Management interface
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Celery Worker
+  celery_worker:
+    build: .
+    command: celery -A myproject worker --loglevel=info
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - web
+      - rabbitmq
+
+  # Flower - Celery Monitoring Tool
+  flower:
+    image: mher/flower
+    command: flower --broker=amqp://guest:guest@rabbitmq:5672//
+    ports:
+      - "5555:5555"
+    depends_on:
+      - rabbitmq
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
